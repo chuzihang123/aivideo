@@ -739,8 +739,8 @@ function Settings({
         <h3>接口约定</h3>
         <code>GPT POST /v1/chat/completions</code>
         <code>GPT POST /v1/audio/speech</code>
-        <code>Grok POST /v1/videos</code>
-        <code>Grok GET /v1/videos/&#123;id&#125;</code>
+      <code>Grok POST /v1/videos/generations</code>
+      <code>Grok GET /v1/videos/&#123;request_id&#125;</code>
         <p className="media-status">{media}</p>
       </div>
     </section>

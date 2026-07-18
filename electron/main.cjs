@@ -107,7 +107,8 @@ ipcMain.handle('gpt:speech', async (_, { project, scene }) => {
 });
 ipcMain.handle('grok:video', async (_, { project, scene }) => {
   const cfg = project.settings.grok, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.mp4`);
-  const created = await jsonRequest(endpoint(cfg.baseUrl, '/v1/videos/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: cfg.model || 'grok-imagine-video', prompt: scene.prompt, duration: scene.duration, aspect_ratio: project.ratio }) });
+  const videoModel = /imagine|video/i.test(cfg.model || '') ? cfg.model : 'grok-imagine-video';
+  const created = await jsonRequest(endpoint(cfg.baseUrl, '/v1/videos/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: videoModel, prompt: scene.prompt, duration: scene.duration, aspect_ratio: project.ratio }) });
   const id = created.id || created.request_id || created.data?.id; if (!id) throw new Error('Grok relay did not return a task ID');
   for (let i = 0; i < 120; i++) {
     await new Promise(r => setTimeout(r, 5000));
