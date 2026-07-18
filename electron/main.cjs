@@ -78,8 +78,10 @@ async function optimizeVideoPrompt(project, scene) {
     return prompt || scene.prompt;
   } catch { return scene.prompt; }
 }
-function localSpeech(text, file) {
-  const script = `$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Speech; $s=New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile(${JSON.stringify(file)}); $s.Speak(${JSON.stringify(text)}); $s.Dispose()`;
+async function localSpeech(text, file) {
+  const textFile = `${file}.txt`;
+  await fs.writeFile(textFile, String(text), 'utf8');
+  const script = `$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Speech; $text=[IO.File]::ReadAllText('${textFile.replace(/'/g, "''")}', [Text.Encoding]::UTF8); $s=New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${file.replace(/'/g, "''")}'); $s.Speak($text); $s.Dispose(); Remove-Item -LiteralPath '${textFile.replace(/'/g, "''")}' -Force`;
   const encoded = Buffer.from(script, 'utf16le').toString('base64');
   const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded], { windowsHide: true, timeout: 120000 });
   if (result.status !== 0) throw new Error(`Local Windows TTS failed: ${String(result.stderr || '').trim()}`);
@@ -123,7 +125,7 @@ ipcMain.handle('gpt:speech', async (_, { project, scene }) => {
   if (!scene.narration?.trim()) return null;
   const cfg = project.settings.gpt, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.mp3`);
   const res = await fetch(endpoint(cfg.baseUrl, '/v1/audio/speech'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: cfg.ttsModel || 'gpt-4o-mini-tts', voice: cfg.voice || 'alloy', input: scene.narration, format: 'mp3' }) });
-  if (!res.ok) { localSpeech(scene.narration, file.replace(/\.mp3$/i, '.wav')); return { localPath: file.replace(/\.mp3$/i, '.wav'), fallback: 'windows-speech' }; }
+  if (!res.ok) { await localSpeech(scene.narration, file.replace(/\.mp3$/i, '.wav')); return { localPath: file.replace(/\.mp3$/i, '.wav'), fallback: 'windows-speech' }; }
   await fs.writeFile(file, Buffer.from(await res.arrayBuffer())); return { localPath: file };
 });
 ipcMain.handle('grok:video', async (_, { project, scene }) => {
