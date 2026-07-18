@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, net, protocol, safeStorage, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, safeStorage, shell } = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { spawn, spawnSync } = require('node:child_process');
@@ -13,6 +13,7 @@ const ffmpegPath = process.env.FFMPEG_PATH || bundledFfmpeg || 'ffmpeg';
 protocol.registerSchemesAsPrivileged([{ scheme: 'vodie-media', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }]);
 const dataFile = () => path.join(app.getPath('userData'), 'project.json');
 const secretFile = () => path.join(app.getPath('userData'), 'providers.bin');
+const historyFile = () => path.join(app.getPath('userData'), 'history.json');
 const mediaRoot = () => path.join(app.getPath('videos'), 'Vodie Studio');
 const auth = (key, json = true) => ({ Authorization: `Bearer ${key}`, ...(json ? { 'Content-Type': 'application/json' } : {}) });
 const endpoint = (base, suffix) => `${String(base).replace(/\/$/, '')}${suffix}`;
@@ -77,8 +78,13 @@ ipcMain.handle('project:load', async () => {
 ipcMain.handle('project:save', async (_, data) => {
   await saveSecrets(data.settings);
   const clean = structuredClone(data); clean.settings.gpt.apiKey = ''; clean.settings.grok.apiKey = '';
-  await fs.writeFile(dataFile(), JSON.stringify(clean, null, 2)); return true;
+  await fs.writeFile(dataFile(), JSON.stringify(clean, null, 2));
+  let history = []; try { history = JSON.parse(await fs.readFile(historyFile(), 'utf8')); } catch {}
+  const entry = { id: clean.id, title: clean.title, updatedAt: new Date().toISOString(), stage: clean.stage, sceneCount: clean.scenes?.length || 0, exportPath: clean.exportPath || '' };
+  history = [entry, ...history.filter(x => x.id !== entry.id)].slice(0, 50);
+  await fs.writeFile(historyFile(), JSON.stringify(history, null, 2)); return true;
 });
+ipcMain.handle('history:list', async () => { try { return JSON.parse(await fs.readFile(historyFile(), 'utf8')); } catch { return []; } });
 ipcMain.handle('provider:test', async (_, { provider, settings }) => {
   const cfg = settings[provider]; await jsonRequest(endpoint(cfg.baseUrl, '/v1/models'), { headers: auth(cfg.apiKey, false) }); return true;
 });
@@ -151,5 +157,5 @@ function createWindow() {
   const win = new BrowserWindow({ width: 1440, height: 920, minWidth: 1100, minHeight: 720, backgroundColor: '#f4f5f7', titleBarStyle: 'hiddenInset', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false } });
   if (!app.isPackaged) win.loadURL('http://127.0.0.1:5173'); else win.loadFile(path.join(__dirname, '../dist/index.html'));
 }
-app.whenReady().then(() => { protocol.handle('vodie-media', req => { const file = decodeURIComponent(new URL(req.url).pathname.slice(1)); return net.fetch(pathToFileURL(file).toString()); }); createWindow(); });
+app.whenReady().then(() => { Menu.setApplicationMenu(null); protocol.handle('vodie-media', req => { const file = decodeURIComponent(new URL(req.url).pathname.slice(1)); return net.fetch(pathToFileURL(file).toString()); }); createWindow(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });

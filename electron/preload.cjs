@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('vodie', {
   load: () => ipcRenderer.invoke('project:load'),
+  history: () => ipcRenderer.invoke('history:list'),
   save: (data) => ipcRenderer.invoke('project:save', data),
   generateScript: (input) => ipcRenderer.invoke('gpt:script', input),
   reviseScript: (input) => ipcRenderer.invoke('gpt:revise', input),

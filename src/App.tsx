@@ -18,7 +18,7 @@ import {
   Sparkles,
   WandSparkles,
 } from "lucide-react";
-import type { Project, Scene, Settings } from "./types";
+import type { HistoryEntry, Project, Scene, Settings } from "./types";
 
 const defaults: Project = {
   id: crypto.randomUUID(),
@@ -124,13 +124,15 @@ const api = {
 
 export default function App() {
   const [project, setProject] = useState<Project>(defaults);
-  const [view, setView] = useState<"studio" | "settings">("studio");
+  const [view, setView] = useState<"studio" | "settings" | "history">("studio");
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatBusy, setChatBusy] = useState(false);
   useEffect(() => {
     api.load().then((p) => p && setProject({ ...defaults, ...p }));
+    window.vodie?.history().then(setHistory).catch(() => undefined);
   }, []);
   useEffect(() => {
     const t = setTimeout(() => api.save(project), 400);
@@ -251,7 +253,7 @@ export default function App() {
           <span>
             <Film size={20} />
           </span>
-          Vodie
+          幻梦视频
         </div>
         <nav>
           <button
@@ -267,6 +269,9 @@ export default function App() {
           >
             <SettingsIcon />
             中转设置
+          </button>
+          <button className={view === "history" ? "active" : ""} onClick={() => { setView("history"); window.vodie?.history().then(setHistory); }}>
+            <RefreshCw />生成历史
           </button>
         </nav>
         <div className="aside-foot">
@@ -285,6 +290,8 @@ export default function App() {
       <main>
         {view === "settings" ? (
           <Settings project={project} setProject={setProject} />
+        ) : view === "history" ? (
+          <HistoryView entries={history} onOpen={(entry) => { setProject((p) => ({ ...p, title: entry.title, exportPath: entry.exportPath })); setView("studio"); }} />
         ) : (
           <>
             <header>
@@ -359,6 +366,9 @@ export default function App() {
   );
 }
 type ChatMessage = { role: "user" | "assistant"; content: string };
+function HistoryView({ entries, onOpen }: { entries: HistoryEntry[]; onOpen: (entry: HistoryEntry) => void }) {
+  return <section className="history-view"><div className="settings-head"><span className="eyebrow">项目记录</span><h1>生成历史</h1><p>最近保存的项目和成片导出记录。</p></div>{entries.length ? <div className="history-list">{entries.map((entry) => <button className="history-row" key={entry.id} onClick={() => onOpen(entry)}><span className="history-mark"><Film /></span><span className="history-main"><b>{entry.title || '未命名影片'}</b><small>{new Date(entry.updatedAt).toLocaleString()} · {entry.sceneCount} 个镜头</small></span><span className={`status ${entry.stage >= 3 ? 'done' : ''}`}>{entry.exportPath ? '已导出' : entry.stage >= 3 ? '生成中' : '草稿'}</span><ChevronRight /></button>)}</div> : <div className="history-empty"><Film/><b>还没有生成记录</b><span>完成一次剧本或视频生成后，记录会显示在这里。</span></div>}</section>;
+}
 function Step({
   n,
   label,

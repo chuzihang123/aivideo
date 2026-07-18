@@ -8,6 +8,19 @@
 .confirm-script { width: calc(100% - 32px); margin: 0 16px 14px; height: 40px; border: 0; border-radius: 5px; background: #202225; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .confirm-script:disabled { opacity: .45; }
 .confirm-script svg { width: 15px; }
+.history-list { display: grid; gap: 8px; }
+.history-row { width: 100%; border: 1px solid #dedfe1; background: #fff; border-radius: 7px; padding: 15px 17px; display: flex; align-items: center; gap: 12px; text-align: left; }
+.history-row:hover { border-color: #b8bcc0; }
+.history-mark { width: 34px; height: 34px; display: grid; place-items: center; background: #fbe9e6; color: #df4b3c; border-radius: 6px; }
+.history-mark svg { width: 17px; }
+.history-main { flex: 1; display: grid; gap: 4px; }
+.history-main b { font-size: 13px; }
+.history-main small { color: #85888c; font-size: 10px; }
+.history-row > svg { width: 15px; color: #aaa; }
+.history-empty { min-height: 260px; border: 1px dashed #d4d6d9; border-radius: 7px; display: grid; place-content: center; justify-items: center; gap: 8px; color: #8a8d91; }
+.history-empty svg { width: 28px; color: #c1c4c8; }
+.history-empty b { color: #555; font-size: 14px; }
+.history-empty span { font-size: 11px; }
 .generation-progress { background: #fff; border: 1px solid #dedfe1; border-radius: 6px; padding: 14px 16px; margin-bottom: 14px; }
 .generation-progress > div:first-child { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
 .generation-progress span { color: #777; }
