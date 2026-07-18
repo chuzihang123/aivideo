@@ -15,6 +15,8 @@ const dataFile = () => path.join(app.getPath('userData'), 'project.json');
 const secretFile = () => path.join(app.getPath('userData'), 'providers.bin');
 const historyFile = () => path.join(app.getPath('userData'), 'history.json');
 const mediaRoot = () => path.join(app.getPath('videos'), 'Vodie Studio');
+const cancelledJobs = new Set();
+let cancelAllRequested = false;
 const auth = (key, json = true) => ({ Authorization: `Bearer ${key}`, ...(json ? { 'Content-Type': 'application/json' } : {}) });
 const endpoint = (base, suffix) => `${String(base).replace(/\/$/, '')}${suffix}`;
 const safeName = (value) => String(value || 'project').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 80);
@@ -125,13 +127,16 @@ ipcMain.handle('gpt:speech', async (_, { project, scene }) => {
   await fs.writeFile(file, Buffer.from(await res.arrayBuffer())); return { localPath: file };
 });
 ipcMain.handle('grok:video', async (_, { project, scene }) => {
+  if (cancelAllRequested) throw new Error('Generation cancelled by user');
   const cfg = project.settings.grok, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.mp4`);
   const videoModel = /imagine|video/i.test(cfg.model || '') ? cfg.model : 'grok-imagine-video';
   const usedPrompt = await optimizeVideoPrompt(project, scene);
   const created = await jsonRequest(endpoint(cfg.baseUrl, '/v1/videos/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: videoModel, prompt: usedPrompt, duration: scene.duration, aspect_ratio: project.ratio }) });
   const id = created.id || created.request_id || created.data?.id; if (!id) throw new Error('Grok relay did not return a task ID');
+  cancelledJobs.delete(id);
   for (let i = 0; i < 120; i++) {
     await new Promise(r => setTimeout(r, 5000));
+    if (cancelAllRequested || cancelledJobs.has(id)) throw new Error('Generation cancelled by user');
     const job = await jsonRequest(endpoint(cfg.baseUrl, `/v1/videos/${id}`), { headers: auth(cfg.apiKey, false) });
     if (['completed', 'succeeded', 'done'].includes(job.status)) {
       const url = job.url || job.video?.url || job.output?.url || job.data?.[0]?.url; if (!url) throw new Error('Completed Grok task has no video URL');
@@ -141,6 +146,7 @@ ipcMain.handle('grok:video', async (_, { project, scene }) => {
   }
   throw new Error('Video generation timed out');
 });
+ipcMain.handle('grok:cancel', async (_, id) => { if (id === 'reset') { cancelAllRequested = false; return true; } if (id) cancelledJobs.add(id); cancelAllRequested = true; return true; });
 ipcMain.handle('project:compose', async (_, { project }) => {
   const scenes = project.scenes.filter(s => s.status === 'done' && s.localVideoPath); if (scenes.length !== project.scenes.length) throw new Error('Generate all scenes before export');
   const dir = await projectDir(project), normalized = [];

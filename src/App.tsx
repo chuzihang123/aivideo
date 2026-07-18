@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   ChevronRight,
@@ -120,6 +120,8 @@ const api = {
     }),
   test: async (provider: keyof Settings, settings: Settings) =>
     window.vodie?.testProvider({ provider, settings }) ?? Promise.resolve(true),
+  cancel: async () => window.vodie?.cancelVideo('cancel-all') ?? true,
+  resetCancel: async () => window.vodie?.cancelVideo('reset') ?? true,
 };
 
 export default function App() {
@@ -130,6 +132,8 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatBusy, setChatBusy] = useState(false);
+  const [cancelRequested, setCancelRequested] = useState(false);
+  const cancelRef = useRef(false);
   useEffect(() => {
     api.load().then((p) => p && setProject({ ...defaults, ...p }));
     window.vodie?.history().then(setHistory).catch(() => undefined);
@@ -227,10 +231,12 @@ export default function App() {
     }
   }
   async function generateAll() {
+    await api.resetCancel(); cancelRef.current = false; setCancelRequested(false);
     setProject((p) => ({ ...p, stage: 3 }));
     for (const scene of project.scenes.filter((s) => s.status !== "done"))
-      await generateOne(scene);
+      { if (cancelRef.current) break; await generateOne(scene); }
   }
+  async function cancelGeneration() { cancelRef.current = true; setCancelRequested(true); await api.cancel(); setNotice("已停止生成，已完成的镜头会保留。"); }
   async function exportVideo() {
     setBusy(true);
     setNotice("");
@@ -358,6 +364,8 @@ export default function App() {
                 onConfirm={generateAll}
                 generateOne={generateOne}
                 exportVideo={exportVideo}
+                cancelGeneration={cancelGeneration}
+                cancelRequested={cancelRequested}
               />
             )}
           </>
@@ -467,6 +475,8 @@ function Storyboard({
   onConfirm,
   generateOne,
   exportVideo,
+  cancelGeneration,
+  cancelRequested,
 }: {
   project: Project;
   setProject: (p: Project) => void;
@@ -481,6 +491,8 @@ function Storyboard({
   onConfirm: () => void;
   generateOne: (s: Scene) => void;
   exportVideo: () => void;
+  cancelGeneration: () => void;
+  cancelRequested: boolean;
 }) {
   const percent = project.scenes.length
     ? Math.round((done / project.scenes.length) * 100)
@@ -496,6 +508,7 @@ function Storyboard({
           <p>{project.summary}</p>
         </div>
         <div className="head-actions">
+          {project.stage === 3 && <button className="secondary stop-generation" onClick={cancelGeneration} disabled={cancelRequested || done === project.scenes.length}><CircleAlert />{cancelRequested ? "已停止" : "停止生成"}</button>}
           <button
             className="secondary export"
             onClick={exportVideo}

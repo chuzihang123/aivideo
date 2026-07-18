@@ -8,6 +8,7 @@
 .confirm-script { width: calc(100% - 32px); margin: 0 16px 14px; height: 40px; border: 0; border-radius: 5px; background: #202225; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .confirm-script:disabled { opacity: .45; }
 .confirm-script svg { width: 15px; }
+.stop-generation { height: 42px; color: #a43d34; border-color: #efc2bd; }
 .history-list { display: grid; gap: 8px; }
 .history-row { width: 100%; border: 1px solid #dedfe1; background: #fff; border-radius: 7px; padding: 15px 17px; display: flex; align-items: center; gap: 12px; text-align: left; }
 .history-row:hover { border-color: #b8bcc0; }
