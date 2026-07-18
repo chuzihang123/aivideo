@@ -4,7 +4,10 @@ const path = require('node:path');
 const { spawn, spawnSync } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 let bundledFfmpeg = null;
-try { bundledFfmpeg = require('ffmpeg-static'); } catch {}
+try {
+  bundledFfmpeg = require('ffmpeg-static');
+  if (bundledFfmpeg && bundledFfmpeg.includes('app.asar')) bundledFfmpeg = bundledFfmpeg.replace('app.asar', 'app.asar.unpacked');
+} catch {}
 const ffmpegPath = process.env.FFMPEG_PATH || bundledFfmpeg || 'ffmpeg';
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'vodie-media', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }]);
