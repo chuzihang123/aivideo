@@ -98,7 +98,7 @@ const api = {
     ),
   video: async (p: Project, s: Scene) =>
     window.vodie?.generateVideo({ project: p, scene: s }) ??
-    new Promise<{ id: string; url: string; localPath: string }>((r) =>
+    new Promise<{ id: string; url: string; localPath: string; usedPrompt?: string }>((r) =>
       setTimeout(
         () =>
           r({
@@ -218,6 +218,7 @@ export default function App() {
         status: "done",
         remoteJobId: out.id,
         videoUrl: out.url,
+        prompt: out.usedPrompt || scene.prompt,
         localVideoPath: out.localPath,
         localAudioPath: speech?.localPath,
       });

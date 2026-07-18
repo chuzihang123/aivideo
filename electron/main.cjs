@@ -67,6 +67,15 @@ function srtTime(seconds) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(x).padStart(3,'0')}`;
 }
 function makeSrt(scenes) { let t = 0; return scenes.map((s, i) => { const start = t; t += Number(s.duration); return `${i + 1}\n${srtTime(start)} --> ${srtTime(t)}\n${String(s.narration || '').replace(/\r?\n/g, ' ')}\n`; }).join('\n'); }
+async function optimizeVideoPrompt(project, scene) {
+  const cfg = project.settings.gpt;
+  const instruction = `Rewrite this scene as one concise English prompt for a video generation model. Put the visible subject, location, and exact action in the first sentence. The scene MUST visibly feature the described Chinese high-school student; never replace the subject with an empty landscape, mountains, a lake, abstract scenery, text, or unrelated people. Preserve continuity and realistic cinematic style. Do not add new symbols or locations. Return only the final prompt, under 900 characters. Scene title: ${scene.title}. Narration: ${scene.narration}. Source prompt: ${scene.prompt}. Global continuity: ${project.globalStyle}`;
+  try {
+    const body = await jsonRequest(endpoint(cfg.baseUrl, '/v1/chat/completions'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: cfg.model, temperature: 0.2, messages: [{ role: 'system', content: 'You convert storyboards into precise, literal video-generation prompts.' }, { role: 'user', content: instruction }] }) });
+    const prompt = String(body.choices?.[0]?.message?.content || '').replace(/^```\w*\s*|\s*```$/g, '').trim();
+    return prompt || scene.prompt;
+  } catch { return scene.prompt; }
+}
 function localSpeech(text, file) {
   const script = `$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Speech; $s=New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile(${JSON.stringify(file)}); $s.Speak(${JSON.stringify(text)}); $s.Dispose()`;
   const encoded = Buffer.from(script, 'utf16le').toString('base64');
@@ -118,14 +127,15 @@ ipcMain.handle('gpt:speech', async (_, { project, scene }) => {
 ipcMain.handle('grok:video', async (_, { project, scene }) => {
   const cfg = project.settings.grok, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.mp4`);
   const videoModel = /imagine|video/i.test(cfg.model || '') ? cfg.model : 'grok-imagine-video';
-  const created = await jsonRequest(endpoint(cfg.baseUrl, '/v1/videos/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: videoModel, prompt: scene.prompt, duration: scene.duration, aspect_ratio: project.ratio }) });
+  const usedPrompt = await optimizeVideoPrompt(project, scene);
+  const created = await jsonRequest(endpoint(cfg.baseUrl, '/v1/videos/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: videoModel, prompt: usedPrompt, duration: scene.duration, aspect_ratio: project.ratio }) });
   const id = created.id || created.request_id || created.data?.id; if (!id) throw new Error('Grok relay did not return a task ID');
   for (let i = 0; i < 120; i++) {
     await new Promise(r => setTimeout(r, 5000));
     const job = await jsonRequest(endpoint(cfg.baseUrl, `/v1/videos/${id}`), { headers: auth(cfg.apiKey, false) });
     if (['completed', 'succeeded', 'done'].includes(job.status)) {
       const url = job.url || job.video?.url || job.output?.url || job.data?.[0]?.url; if (!url) throw new Error('Completed Grok task has no video URL');
-      await download(url, file, cfg.apiKey); return { id, localPath: file, url: mediaUrl(file) };
+      await download(url, file, cfg.apiKey); return { id, localPath: file, url: mediaUrl(file), usedPrompt };
     }
     if (['failed', 'cancelled'].includes(job.status)) throw new Error(job.error?.message || 'Video generation failed');
   }
