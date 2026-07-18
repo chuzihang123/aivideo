@@ -1,0 +1,6 @@
+export type Provider = { baseUrl: string; apiKey: string; model: string; ttsModel?: string; voice?: string };
+export type Settings = { gpt: Provider; grok: Provider };
+export type SceneStatus = 'draft' | 'queued' | 'generating' | 'done' | 'failed';
+export type Scene = { id: string; title: string; duration: number; narration: string; prompt: string; status: SceneStatus; remoteJobId?: string; videoUrl?: string; localVideoPath?: string; localAudioPath?: string; error?: string };
+export type Project = { id: string; title: string; brief: string; summary: string; globalStyle: string; duration: number; ratio: string; stage: number; scenes: Scene[]; settings: Settings; exportPath?: string };
+declare global { interface Window { vodie?: { load(): Promise<Project | null>; save(data: Project): Promise<boolean>; generateScript(input: unknown): Promise<any>; reviseScript(input: unknown): Promise<any>; generateVideo(input: unknown): Promise<{id:string;url:string;localPath:string}>; generateSpeech(input: unknown): Promise<{localPath:string}|null>; compose(input: unknown): Promise<{canceled:boolean;path?:string}>; openPath(path:string):Promise<void>; mediaCheck():Promise<{ok:boolean;path:string;error:string}>; testProvider(input: unknown): Promise<boolean> } } }

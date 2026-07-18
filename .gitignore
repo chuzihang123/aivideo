@@ -1,0 +1,14 @@
+node_modules/
+dist/
+release/
+*.log
+.env
+.env.*
+xianxian-output/
+xianxian-project.json
+
+# Local Electron and generated media
+*.mp4
+*.mp3
+*.wav
+*.srt
