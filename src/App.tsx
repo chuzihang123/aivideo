@@ -246,6 +246,11 @@ export default function App() {
       { if (cancelRef.current) break; await generateOne(scene); }
   }
   async function cancelGeneration() { cancelRef.current = true; setCancelRequested(true); await api.cancel(); setNotice("已停止生成，已完成的镜头会保留。"); }
+  async function createNewProject() {
+    await api.cancel(); cancelRef.current = false; setCancelRequested(false); setChat([]); setNotice("");
+    setProject({ ...defaults, id: crypto.randomUUID(), settings: project.settings });
+    setView("studio"); window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   async function exportVideo() {
     setBusy(true);
     setNotice("");
@@ -272,6 +277,7 @@ export default function App() {
           幻梦视频
         </div>
         <nav>
+          <button className="new-project" onClick={createNewProject}><Plus />新建创作</button>
           <button
             className={view === "studio" ? "active" : ""}
             onClick={() => setView("studio")}

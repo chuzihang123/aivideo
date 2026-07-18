@@ -23,6 +23,8 @@
 .history-empty svg { width: 28px; color: #c1c4c8; }
 .history-empty b { color: #555; font-size: 14px; }
 .history-empty span { font-size: 11px; }
+nav .new-project { background: #ef4d3d; color: #fff; margin-bottom: 8px; }
+nav .new-project:hover { background: #dc4133; }
 .generation-progress { background: #fff; border: 1px solid #dedfe1; border-radius: 6px; padding: 14px 16px; margin-bottom: 14px; }
 .generation-progress > div:first-child { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
 .generation-progress span { color: #777; }
