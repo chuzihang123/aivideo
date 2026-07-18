@@ -46,6 +46,12 @@ jobs:
       - name: Build Windows installer
         run: npm run dist:win
 
+      - name: Verify relative renderer assets
+        shell: pwsh
+        run: |
+          $html = Get-Content dist/index.html -Raw
+          if ($html -match 'src="/assets/|href="/assets/') { throw "Absolute renderer asset path detected" }
+
       - name: Verify installer
         shell: pwsh
         run: |
