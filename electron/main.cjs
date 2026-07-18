@@ -21,7 +21,9 @@ const safeName = (value) => String(value || 'project').replace(/[<>:"/\\|?*\x00-
 const mediaUrl = (file) => `vodie-media://local/${encodeURIComponent(file)}`;
 
 async function jsonRequest(url, options = {}) {
-  const res = await fetch(url, options);
+  let res;
+  try { res = await fetch(url, options); }
+  catch (error) { throw new Error(`Request connection failed (${new URL(url).pathname}): ${error.cause?.message || error.message}`); }
   const text = await res.text();
   let body; try { body = JSON.parse(text); } catch { body = { message: text }; }
   if (!res.ok) throw new Error(body?.error?.message || body?.message || `HTTP ${res.status}`);
@@ -47,8 +49,10 @@ async function projectDir(project) {
   return dir;
 }
 async function download(url, file, key) {
-  const res = await fetch(url, { headers: key ? auth(key, false) : {} });
-  if (!res.ok || !res.body) throw new Error(`Media download failed: HTTP ${res.status}`);
+  let res;
+  try { res = await net.fetch(url, { headers: key ? auth(key, false) : {} }); }
+  catch (error) { throw new Error(`Video download connection failed: ${error.cause?.message || error.message}`); }
+  if (!res.ok || !res.body) throw new Error(`Video download failed: HTTP ${res.status}`);
   await fs.writeFile(file, Buffer.from(await res.arrayBuffer()));
 }
 function runFfmpeg(args) {
