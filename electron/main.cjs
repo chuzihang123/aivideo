@@ -20,7 +20,7 @@ let cancelAllRequested = false;
 const auth = (key, json = true) => ({ Authorization: `Bearer ${key}`, ...(json ? { 'Content-Type': 'application/json' } : {}) });
 const endpoint = (base, suffix) => `${String(base).replace(/\/$/, '')}${suffix}`;
 const safeName = (value) => String(value || 'project').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 80);
-const mediaUrl = (file) => `vodie-media://local/${encodeURIComponent(file)}`;
+const mediaUrl = (file) => `vodie-media://local/${encodeURIComponent(file)}?v=${Date.now()}`;
 
 async function jsonRequest(url, options = {}) {
   let res;

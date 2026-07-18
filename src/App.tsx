@@ -212,7 +212,7 @@ export default function App() {
     }
   }
   async function generateOne(scene: Scene) {
-    updateScene(scene.id, { status: "generating", error: "" });
+    updateScene(scene.id, { status: "generating", error: "", videoUrl: undefined, localVideoPath: undefined, localAudioPath: undefined });
     try {
       const [out, speech] = await Promise.all([
         api.video(project, scene),
