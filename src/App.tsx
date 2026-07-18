@@ -347,6 +347,7 @@ export default function App() {
                 revise={reviseScript}
                 update={updateScene}
                 generateAll={generateAll}
+                onConfirm={generateAll}
                 generateOne={generateOne}
                 exportVideo={exportVideo}
               />
@@ -452,6 +453,7 @@ function Storyboard({
   revise,
   update,
   generateAll,
+  onConfirm,
   generateOne,
   exportVideo,
 }: {
@@ -465,6 +467,7 @@ function Storyboard({
   revise: (message: string) => void;
   update: (id: string, p: Partial<Scene>) => void;
   generateAll: () => void;
+  onConfirm: () => void;
   generateOne: (s: Scene) => void;
   exportVideo: () => void;
 }) {
@@ -515,7 +518,10 @@ function Storyboard({
         </div>
       )}
       {project.stage === 2 && (
-        <ScriptChat messages={chat} busy={chatBusy} onSend={revise} />
+        <>
+        <ScriptChat messages={chat} busy={chatBusy} onSend={revise} onConfirm={onConfirm} />
+        <button className="confirm-script" onClick={onConfirm} disabled={chatBusy || !chat.length}><Check />确认剧本，自动开始生成视频</button>
+        </>
       )}
       {project.exportPath && (
         <button
@@ -647,7 +653,7 @@ function Storyboard({
     </section>
   );
 }
-function ScriptChat({ messages, busy, onSend }: { messages: ChatMessage[]; busy: boolean; onSend: (message: string) => void }) {
+function ScriptChat({ messages, busy, onSend, onConfirm }: { messages: ChatMessage[]; busy: boolean; onSend: (message: string) => void; onConfirm: () => void }) {
   const [input, setInput] = useState("");
   const submit = () => { const value = input.trim(); if (!value || busy) return; setInput(""); onSend(value); };
   return <div className="script-chat">

@@ -5,6 +5,9 @@
 .export-result span { color: #6a7c70; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-foot .test-btn { margin-left: auto; }
 .test-btn { padding: 6px 9px; }
+.confirm-script { width: calc(100% - 32px); margin: 0 16px 14px; height: 40px; border: 0; border-radius: 5px; background: #202225; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.confirm-script:disabled { opacity: .45; }
+.confirm-script svg { width: 15px; }
 .generation-progress { background: #fff; border: 1px solid #dedfe1; border-radius: 6px; padding: 14px 16px; margin-bottom: 14px; }
 .generation-progress > div:first-child { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
 .generation-progress span { color: #777; }
