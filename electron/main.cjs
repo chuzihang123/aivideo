@@ -128,12 +128,32 @@ ipcMain.handle('gpt:speech', async (_, { project, scene }) => {
   if (!res.ok) { await localSpeech(scene.narration, file.replace(/\.mp3$/i, '.wav')); return { localPath: file.replace(/\.mp3$/i, '.wav'), fallback: 'windows-speech' }; }
   await fs.writeFile(file, Buffer.from(await res.arrayBuffer())); return { localPath: file };
 });
+ipcMain.handle('grok:image', async (_, { project, scene }) => {
+  const cfg = project.settings.grok, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.jpg`);
+  const prompt = await optimizeVideoPrompt(project, scene);
+  const body = await jsonRequest(endpoint(cfg.baseUrl, '/v1/images/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: 'grok-imagine-image', prompt, aspect_ratio: project.ratio, n: 1 }) });
+  const item = body.data?.[0] || body.output?.[0] || body;
+  const remoteUrl = item.url || item.image_url;
+  if (remoteUrl) await download(remoteUrl, file, cfg.apiKey);
+  else if (item.b64_json) await fs.writeFile(file, Buffer.from(item.b64_json, 'base64'));
+  else throw new Error('Image generation completed without an image URL');
+  return { localPath: file, url: mediaUrl(file), remoteUrl: remoteUrl || `data:image/jpeg;base64,${item.b64_json}`, usedPrompt: prompt };
+});
 ipcMain.handle('grok:video', async (_, { project, scene }) => {
   if (cancelAllRequested) throw new Error('Generation cancelled by user');
   const cfg = project.settings.grok, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.mp4`);
   const videoModel = /imagine|video/i.test(cfg.model || '') ? cfg.model : 'grok-imagine-video';
   const usedPrompt = await optimizeVideoPrompt(project, scene);
-  const created = await jsonRequest(endpoint(cfg.baseUrl, '/v1/videos/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: videoModel, prompt: usedPrompt, duration: scene.duration, aspect_ratio: project.ratio }) });
+  const baseBody = { model: videoModel, prompt: usedPrompt, duration: scene.duration, aspect_ratio: project.ratio };
+  let created;
+  if (scene.remoteImageUrl) {
+    let lastError;
+    for (const field of ['image_url', 'image', 'input_image']) {
+      try { created = await jsonRequest(endpoint(cfg.baseUrl, '/v1/videos/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ ...baseBody, [field]: scene.remoteImageUrl }) }); break; }
+      catch (error) { lastError = error; if (!/400|invalid|request/i.test(error.message)) throw error; }
+    }
+    if (!created) throw lastError;
+  } else created = await jsonRequest(endpoint(cfg.baseUrl, '/v1/videos/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify(baseBody) });
   const id = created.id || created.request_id || created.data?.id; if (!id) throw new Error('Grok relay did not return a task ID');
   cancelledJobs.delete(id);
   for (let i = 0; i < 120; i++) {

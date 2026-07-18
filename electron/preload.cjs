@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('vodie', {
   generateScript: (input) => ipcRenderer.invoke('gpt:script', input),
   reviseScript: (input) => ipcRenderer.invoke('gpt:revise', input),
   generateVideo: (input) => ipcRenderer.invoke('grok:video', input),
+  generateImage: (input) => ipcRenderer.invoke('grok:image', input),
   cancelVideo: (id) => ipcRenderer.invoke('grok:cancel', id),
   generateSpeech: (input) => ipcRenderer.invoke('gpt:speech', input),
   compose: (input) => ipcRenderer.invoke('project:compose', input),

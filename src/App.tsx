@@ -109,6 +109,9 @@ const api = {
         1600,
       ),
     ),
+  image: async (p: Project, s: Scene) =>
+    window.vodie?.generateImage({ project: p, scene: s }) ??
+    Promise.resolve({ url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee", localPath: "", remoteUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee", usedPrompt: s.prompt }),
   speech: async (p: Project, s: Scene) =>
     window.vodie?.generateSpeech({ project: p, scene: s }) ??
     Promise.resolve(null),
@@ -214,8 +217,11 @@ export default function App() {
   async function generateOne(scene: Scene) {
     updateScene(scene.id, { status: "generating", error: "", videoUrl: undefined, localVideoPath: undefined, localAudioPath: undefined });
     try {
+      const image = await api.image(project, scene);
+      const sceneWithImage = { ...scene, imageUrl: image.url, remoteImageUrl: image.remoteUrl, localImagePath: image.localPath, prompt: image.usedPrompt || scene.prompt };
+      updateScene(scene.id, sceneWithImage);
       const [out, speech] = await Promise.all([
-        api.video(project, scene),
+        api.video(project, sceneWithImage),
         api.speech(project, scene),
       ]);
       updateScene(scene.id, {
@@ -223,6 +229,9 @@ export default function App() {
         remoteJobId: out.id,
         videoUrl: out.url,
         prompt: out.usedPrompt || scene.prompt,
+        imageUrl: image.url,
+        remoteImageUrl: image.remoteUrl,
+        localImagePath: image.localPath,
         localVideoPath: out.localPath,
         localAudioPath: speech?.localPath,
       });
@@ -570,6 +579,8 @@ function Storyboard({
               <span>{String(i + 1).padStart(2, "0")}</span>
               {s.videoUrl ? (
                 <video src={s.videoUrl} muted controls />
+              ) : s.imageUrl ? (
+                <img src={s.imageUrl} alt={`${s.title} 关键帧`} />
               ) : (
                 <div className={`placeholder ${s.status}`}>
                   <Clapperboard />

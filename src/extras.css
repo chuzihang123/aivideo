@@ -9,6 +9,7 @@
 .confirm-script:disabled { opacity: .45; }
 .confirm-script svg { width: 15px; }
 .stop-generation { height: 42px; color: #a43d34; border-color: #efc2bd; }
+.shot img { width: 100%; height: 100%; object-fit: cover; }
 .history-list { display: grid; gap: 8px; }
 .history-row { width: 100%; border: 1px solid #dedfe1; background: #fff; border-radius: 7px; padding: 15px 17px; display: flex; align-items: center; gap: 12px; text-align: left; }
 .history-row:hover { border-color: #b8bcc0; }
