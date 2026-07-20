@@ -31,17 +31,15 @@ const defaults: Project = {
   stage: 1,
   scenes: [],
   settings: {
-    gpt: {
-      baseUrl: "http://38.76.195.153:8088",
-      apiKey: "",
-      model: "gpt-5.6-luna",
-      ttsModel: "gpt-4o-audio-preview",
-      voice: "alloy",
+    deepseek: {
+      baseUrl: "https://api.deepseek.com",
+      apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || "",
+      model: "deepseek-chat",
     },
     grok: {
-      baseUrl: "http://38.76.195.153:8088",
-      apiKey: "",
-      model: "grok-4.5",
+      baseUrl: "https://api.x.ai",
+      apiKey: import.meta.env.VITE_GROK_API_KEY || "",
+      model: "grok-2-1212",
     },
   },
 };
@@ -298,9 +296,9 @@ export default function App() {
         </nav>
         <div className="aside-foot">
           <div className="provider">
-            <i className={project.settings.gpt.baseUrl ? "on" : ""} />
-            <span>GPT 调度</span>
-            <b>{project.settings.gpt.baseUrl ? "已配置" : "未配置"}</b>
+            <i className={project.settings.deepseek.baseUrl ? "on" : ""} />
+            <span>DeepSeek 调度</span>
+            <b>{project.settings.deepseek.baseUrl ? "已配置" : "未配置"}</b>
           </div>
           <div className="provider">
             <i className={project.settings.grok.baseUrl ? "on" : ""} />
@@ -430,7 +428,7 @@ function Brief({
         </span>
         <div>
           <h2>从一个想法开始</h2>
-          <p>GPT 将担任编剧和总导演，建立贯穿全片的视觉连续性。</p>
+          <p>DeepSeek 将担任编剧和总导演，建立贯穿全片的视觉连续性。</p>
         </div>
       </div>
       <label>影片主题与创作要求</label>
@@ -698,8 +696,8 @@ function ScriptChat({ messages, busy, onSend, onConfirm }: { messages: ChatMessa
   const [input, setInput] = useState("");
   const submit = () => { const value = input.trim(); if (!value || busy) return; setInput(""); onSend(value); };
   return <div className="script-chat">
-    <div className="chat-title"><MessageSquare/><div><b>与 GPT 导演确认剧本</b><span>提出修改，满意后再生成视频</span></div></div>
-    <div className="chat-messages">{messages.map((message,index)=><div key={index} className={`chat-message ${message.role}`}><span>{message.role==='assistant'?'GPT 导演':'你'}</span><p>{message.content}</p></div>)}{busy&&<div className="chat-message assistant"><span>GPT 导演</span><p><LoaderCircle className="spin"/>正在修改剧本…</p></div>}</div>
+    <div className="chat-title"><MessageSquare/><div><b>与 DeepSeek 导演确认剧本</b><span>提出修改，满意后再生成视频</span></div></div>
+    <div className="chat-messages">{messages.map((message,index)=><div key={index} className={`chat-message ${message.role}`}><span>{message.role==='assistant'?'DeepSeek 导演':'你'}</span><p>{message.content}</p></div>)}{busy&&<div className="chat-message assistant"><span>DeepSeek 导演</span><p><LoaderCircle className="spin"/>正在修改剧本…</p></div>}</div>
     <div className="chat-input"><textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submit()}}} placeholder="例如：让修仙异象更克制，结尾增加同学们的反应…"/><button onClick={submit} disabled={!input.trim()||busy} title="发送修改要求"><Send/></button></div>
   </div>;
 }
@@ -730,7 +728,7 @@ function Settings({
         [provider]: { ...project.settings[provider], [key]: value },
       },
     });
-  const test = async (provider: keyof Settings) => {
+  const test = async (provider: "deepseek" | "grok") => {
     setStates((s) => ({ ...s, [provider]: "测试中…" }));
     try {
       await api.test(provider, project.settings);
@@ -745,32 +743,18 @@ function Settings({
         <span className="eyebrow">供应商配置</span>
         <h1>两条通道，各司其职</h1>
         <p>
-          GPT 负责编剧、调度与配音；Grok 专注生成视频。凭据由 Windows 加密保存。
+          DeepSeek 负责编剧、调度与提示词优化；Grok 专注生成视频。凭据由 Windows 加密保存。
         </p>
       </div>
       <div className="settings-grid">
         <ProviderCard
-          name="GPT 调度中转"
-          note="剧本 · 分镜 · TTS 配音"
+          name="DeepSeek 导演调度"
+          note="剧本 · 分镜 · 提示词优化"
           accent="green"
-          data={project.settings.gpt}
-          result={states.gpt}
-          onTest={() => test("gpt")}
-          onChange={(k, v) => set("gpt", k, v)}
-          extras={
-            <>
-              <label>TTS 模型</label>
-              <input
-                value={project.settings.gpt.ttsModel || ""}
-                onChange={(e) => set("gpt", "ttsModel", e.target.value)}
-              />
-              <label>声音</label>
-              <input
-                value={project.settings.gpt.voice || ""}
-                onChange={(e) => set("gpt", "voice", e.target.value)}
-              />
-            </>
-          }
+          data={project.settings.deepseek}
+          result={states.deepseek}
+          onTest={() => test("deepseek")}
+          onChange={(k, v) => set("deepseek", k, v)}
         />
         <ProviderCard
           name="Grok 视频中转"
@@ -784,8 +768,8 @@ function Settings({
       </div>
       <div className="protocol">
         <h3>接口约定</h3>
-        <code>GPT POST /v1/chat/completions</code>
-        <code>GPT POST /v1/audio/speech</code>
+        <code>DeepSeek POST /v1/chat/completions</code>
+        <code>Local Windows TTS</code>
       <code>Grok POST /v1/videos/generations</code>
       <code>Grok GET /v1/videos/&#123;request_id&#125;</code>
         <p className="media-status">{media}</p>

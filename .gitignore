@@ -4,6 +4,7 @@ release/
 *.log
 .env
 .env.*
+!.env.example
 xianxian-output/
 xianxian-project.json
 

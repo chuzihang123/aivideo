@@ -1,5 +1,5 @@
-export type Provider = { baseUrl: string; apiKey: string; model: string; ttsModel?: string; voice?: string };
-export type Settings = { gpt: Provider; grok: Provider };
+export type Provider = { baseUrl: string; apiKey: string; model: string; };
+export type Settings = { deepseek: Provider; grok: Provider };
 export type SceneStatus = 'draft' | 'queued' | 'generating' | 'done' | 'failed';
 export type Scene = { id: string; title: string; duration: number; narration: string; prompt: string; status: SceneStatus; remoteJobId?: string; imageUrl?: string; remoteImageUrl?: string; localImagePath?: string; videoUrl?: string; localVideoPath?: string; localAudioPath?: string; error?: string };
 export type Project = { id: string; title: string; brief: string; summary: string; globalStyle: string; duration: number; ratio: string; stage: number; scenes: Scene[]; settings: Settings; exportPath?: string };

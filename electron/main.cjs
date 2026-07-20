@@ -70,7 +70,7 @@ function srtTime(seconds) {
 }
 function makeSrt(scenes) { let t = 0; return scenes.map((s, i) => { const start = t; t += Number(s.duration); return `${i + 1}\n${srtTime(start)} --> ${srtTime(t)}\n${String(s.narration || '').replace(/\r?\n/g, ' ')}\n`; }).join('\n'); }
 async function optimizeVideoPrompt(project, scene) {
-  const cfg = project.settings.gpt;
+  const cfg = project.settings.deepseek;
   const instruction = `Rewrite this scene as one concise English prompt for a video generation model. Put the visible subject, location, and exact action in the first sentence. The scene MUST visibly feature the described Chinese high-school student; never replace the subject with an empty landscape, mountains, a lake, abstract scenery, text, or unrelated people. Preserve continuity and realistic cinematic style. Do not add new symbols or locations. Return only the final prompt, under 900 characters. Scene title: ${scene.title}. Narration: ${scene.narration}. Source prompt: ${scene.prompt}. Global continuity: ${project.globalStyle}`;
   try {
     const body = await jsonRequest(endpoint(cfg.baseUrl, '/v1/chat/completions'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: cfg.model, temperature: 0.2, messages: [{ role: 'system', content: 'You convert storyboards into precise, literal video-generation prompts.' }, { role: 'user', content: instruction }] }) });
@@ -94,7 +94,7 @@ ipcMain.handle('project:load', async () => {
 });
 ipcMain.handle('project:save', async (_, data) => {
   await saveSecrets(data.settings);
-  const clean = structuredClone(data); clean.settings.gpt.apiKey = ''; clean.settings.grok.apiKey = '';
+  const clean = structuredClone(data); clean.settings.deepseek.apiKey = ''; clean.settings.grok.apiKey = '';
   await fs.writeFile(dataFile(), JSON.stringify(clean, null, 2));
   let history = []; try { history = JSON.parse(await fs.readFile(historyFile(), 'utf8')); } catch {}
   const entry = { id: clean.id, title: clean.title, updatedAt: new Date().toISOString(), stage: clean.stage, sceneCount: clean.scenes?.length || 0, exportPath: clean.exportPath || '' };
@@ -105,33 +105,33 @@ ipcMain.handle('history:list', async () => { try { return JSON.parse(await fs.re
 ipcMain.handle('provider:test', async (_, { provider, settings }) => {
   const cfg = settings[provider]; await jsonRequest(endpoint(cfg.baseUrl, '/v1/models'), { headers: auth(cfg.apiKey, false) }); return true;
 });
-ipcMain.handle('gpt:script', async (_, { brief, duration, ratio, settings }) => {
+ipcMain.handle('deepseek:script', async (_, { brief, duration, ratio, settings }) => {
   const sceneCount = Math.max(2, Math.ceil(duration / 8));
   const prompt = `Create a complete Chinese screenplay and storyboard for: ${brief}. Total duration ${duration}s, aspect ratio ${ratio}, exactly ${sceneCount} continuous shots. Maintain character, location, lighting and art continuity. Return JSON only: {"title":"","summary":"","globalStyle":"","scenes":[{"title":"","duration":8,"narration":"","prompt":""}]}. Each prompt must be a detailed Chinese video-generation prompt containing the global continuity description.`;
-  const cfg = settings.gpt;
+  const cfg = settings.deepseek;
   const body = await jsonRequest(endpoint(cfg.baseUrl, '/v1/chat/completions'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: cfg.model, temperature: 0.7, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: 'You are a professional Chinese screenwriter, storyboard artist, and production scheduler.' }, { role: 'user', content: prompt }] }) });
   const parsed = extractJson(body.choices?.[0]?.message?.content || '');
   if (!Array.isArray(parsed.scenes) || !parsed.scenes.length) throw new Error('GPT returned an empty storyboard'); return parsed;
 });
-ipcMain.handle('gpt:revise', async (_, { project, message, history }) => {
-  const cfg = project.settings.gpt;
+ipcMain.handle('deepseek:revise', async (_, { project, message, history }) => {
+  const cfg = project.settings.deepseek;
   const current = { title: project.title, summary: project.summary, globalStyle: project.globalStyle, scenes: project.scenes.map(({ title, duration, narration, prompt }) => ({ title, duration, narration, prompt })) };
   const prompt = `The user is reviewing a Chinese video screenplay. Revise it according to the request while preserving any content not requested to change. Keep total duration near ${project.duration}s and aspect ratio ${project.ratio}. Return JSON only: {"reply":"brief Chinese explanation to user","title":"","summary":"","globalStyle":"","scenes":[{"title":"","duration":8,"narration":"","prompt":""}]}. Current screenplay: ${JSON.stringify(current)}. Recent conversation: ${JSON.stringify(history || [])}. User request: ${message}`;
   const body = await jsonRequest(endpoint(cfg.baseUrl, '/v1/chat/completions'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: cfg.model, temperature: 0.6, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: 'You are the Chinese film director. Collaborate with the user and revise the screenplay precisely.' }, { role: 'user', content: prompt }] }) });
   const parsed = extractJson(body.choices?.[0]?.message?.content || '');
   if (!Array.isArray(parsed.scenes) || !parsed.scenes.length) throw new Error('GPT returned an empty revised storyboard'); return parsed;
 });
-ipcMain.handle('gpt:speech', async (_, { project, scene }) => {
+ipcMain.handle('deepseek:speech', async (_, { project, scene }) => {
   if (!scene.narration?.trim()) return null;
-  const cfg = project.settings.gpt, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.mp3`);
-  const res = await fetch(endpoint(cfg.baseUrl, '/v1/audio/speech'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: cfg.ttsModel || 'gpt-4o-mini-tts', voice: cfg.voice || 'alloy', input: scene.narration, format: 'mp3' }) });
-  if (!res.ok) { await localSpeech(scene.narration, file.replace(/\.mp3$/i, '.wav')); return { localPath: file.replace(/\.mp3$/i, '.wav'), fallback: 'windows-speech' }; }
-  await fs.writeFile(file, Buffer.from(await res.arrayBuffer())); return { localPath: file };
+  const dir = await projectDir(project), file = path.join(dir, "scenes", `${scene.id}.wav`);
+  await localSpeech(scene.narration, file);
+  return { localPath: file, fallback: "windows-speech" };
 });
 ipcMain.handle('grok:image', async (_, { project, scene }) => {
   const cfg = project.settings.grok, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.jpg`);
   const prompt = await optimizeVideoPrompt(project, scene);
-  const body = await jsonRequest(endpoint(cfg.baseUrl, '/v1/images/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: 'grok-imagine-image', prompt, aspect_ratio: project.ratio, n: 1 }) });
+  const imageModel = /imagine|image/i.test(cfg.model || '') ? cfg.model : 'grok-2-image';
+  const body = await jsonRequest(endpoint(cfg.baseUrl, '/v1/images/generations'), { method: 'POST', headers: auth(cfg.apiKey), body: JSON.stringify({ model: imageModel, prompt, aspect_ratio: project.ratio, n: 1 }) });
   const item = body.data?.[0] || body.output?.[0] || body;
   const remoteUrl = item.url || item.image_url;
   if (remoteUrl) await download(remoteUrl, file, cfg.apiKey);
@@ -142,7 +142,7 @@ ipcMain.handle('grok:image', async (_, { project, scene }) => {
 ipcMain.handle('grok:video', async (_, { project, scene }) => {
   if (cancelAllRequested) throw new Error('Generation cancelled by user');
   const cfg = project.settings.grok, dir = await projectDir(project), file = path.join(dir, 'scenes', `${scene.id}.mp4`);
-  const videoModel = /imagine|video/i.test(cfg.model || '') ? cfg.model : 'grok-imagine-video';
+  const videoModel = /imagine|video/i.test(cfg.model || '') ? cfg.model : 'grok-2-video';
   const usedPrompt = await optimizeVideoPrompt(project, scene);
   const baseBody = { model: videoModel, prompt: usedPrompt, duration: scene.duration, aspect_ratio: project.ratio };
   let created;
