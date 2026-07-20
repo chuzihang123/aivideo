@@ -13,3 +13,15 @@ xianxian-project.json
 *.mp3
 *.wav
 *.srt
+
+# Test / dev artifacts
+*.jpeg
+*.jpg
+tools/
+media-gateway/
+gateway-test.*
+normal-test.*
+test*.*
+updated*.*
+__pycache__/
+
