@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   ChevronRight,
@@ -22,7 +22,7 @@ import type { HistoryEntry, Project, Scene, Settings } from "./types";
 
 const defaults: Project = {
   id: crypto.randomUUID(),
-  title: "未命名影片",
+  title: "鏈懡鍚嶅奖鐗?,
   brief: "",
   summary: "",
   globalStyle: "",
@@ -33,24 +33,24 @@ const defaults: Project = {
   settings: {
     deepseek: {
       baseUrl: "https://api.deepseek.com",
-      apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || "",
+      apiKey: "",
       model: "deepseek-chat",
     },
     grok: {
       baseUrl: "https://api.x.ai",
-      apiKey: import.meta.env.VITE_GROK_API_KEY || "",
+      apiKey: "",
       model: "grok-2-1212",
     },
   },
 };
 const mockScript = (p: Project) => ({
-  title: p.brief.slice(0, 18) || "城市苏醒之前",
-  summary: "一支由连贯镜头构成的电影感叙事短片。",
-  globalStyle: "写实电影质感，自然光，克制配色，人物与场景连续一致",
+  title: p.brief.slice(0, 18) || "鍩庡競鑻忛啋涔嬪墠",
+  summary: "涓€鏀敱杩炶疮闀滃ご鏋勬垚鐨勭數褰辨劅鍙欎簨鐭墖銆?,
+  globalStyle: "鍐欏疄鐢靛奖璐ㄦ劅锛岃嚜鐒跺厜锛屽厠鍒堕厤鑹诧紝浜虹墿涓庡満鏅繛缁竴鑷?,
   scenes: Array.from(
     { length: Math.max(3, Math.ceil(p.duration / 20)) },
     (_, i) => ({
-      title: `镜头 ${String(i + 1).padStart(2, "0")}`,
+      title: `闀滃ご ${String(i + 1).padStart(2, "0")}`,
       duration: Math.min(
         10,
         Math.max(
@@ -58,8 +58,8 @@ const mockScript = (p: Project) => ({
           Math.round(p.duration / Math.max(3, Math.ceil(p.duration / 20))),
         ),
       ),
-      narration: `第 ${i + 1} 幕的旁白，推动故事向前发展。`,
-      prompt: `${p.brief}。第 ${i + 1} 个连续镜头，写实电影质感，自然光，稳定运镜，人物服装与场景保持一致，${p.ratio}。`,
+      narration: `绗?${i + 1} 骞曠殑鏃佺櫧锛屾帹鍔ㄦ晠浜嬪悜鍓嶅彂灞曘€俙,
+      prompt: `${p.brief}銆傜 ${i + 1} 涓繛缁暅澶达紝鍐欏疄鐢靛奖璐ㄦ劅锛岃嚜鐒跺厜锛岀ǔ瀹氳繍闀滐紝浜虹墿鏈嶈涓庡満鏅繚鎸佷竴鑷达紝${p.ratio}銆俙,
     }),
   ),
 });
@@ -85,7 +85,7 @@ const api = {
       setTimeout(
         () =>
           r({
-            reply: `已根据“${message}”调整剧本，请继续审阅。`,
+            reply: `宸叉牴鎹€?{message}鈥濊皟鏁村墽鏈紝璇风户缁闃呫€俙,
             title: p.title,
             summary: p.summary,
             globalStyle: p.globalStyle,
@@ -117,7 +117,7 @@ const api = {
     window.vodie?.compose({ project: p }) ??
     Promise.resolve({
       canceled: false,
-      path: "浏览器模拟模式不执行 FFmpeg 导出",
+      path: "娴忚鍣ㄦā鎷熸ā寮忎笉鎵ц FFmpeg 瀵煎嚭",
     }),
   test: async (provider: keyof Settings, settings: Settings) =>
     window.vodie?.testProvider({ provider, settings }) ?? Promise.resolve(true),
@@ -153,7 +153,7 @@ export default function App() {
       scenes: p.scenes.map((s) => (s.id === id ? { ...s, ...patch } : s)),
     }));
   async function generateScript() {
-    if (!project.brief.trim()) return setNotice("请先写下影片主题");
+    if (!project.brief.trim()) return setNotice("璇峰厛鍐欎笅褰辩墖涓婚");
     setBusy(true);
     setNotice("");
     try {
@@ -173,7 +173,7 @@ export default function App() {
       setChat([
         {
           role: "assistant",
-          content: `初稿《${x.title}》已经完成。你可以直接告诉我需要修改的人物、情节、风格、旁白或镜头；确认满意后再生成视频。`,
+          content: `鍒濈銆?{x.title}銆嬪凡缁忓畬鎴愩€備綘鍙互鐩存帴鍛婅瘔鎴戦渶瑕佷慨鏀圭殑浜虹墿銆佹儏鑺傘€侀鏍笺€佹梺鐧芥垨闀滃ご锛涚‘璁ゆ弧鎰忓悗鍐嶇敓鎴愯棰戙€俙,
         },
       ]);
     } catch (e: any) {
@@ -201,12 +201,12 @@ export default function App() {
       }));
       setChat((c) => [
         ...c,
-        { role: "assistant", content: x.reply || "已完成修改，请继续审阅。" },
+        { role: "assistant", content: x.reply || "宸插畬鎴愪慨鏀癸紝璇风户缁闃呫€? },
       ]);
     } catch (e: any) {
       setChat((c) => [
         ...c,
-        { role: "assistant", content: `修改失败：${e.message}` },
+        { role: "assistant", content: `淇敼澶辫触锛?{e.message}` },
       ]);
     } finally {
       setChatBusy(false);
@@ -243,7 +243,7 @@ export default function App() {
     for (const scene of project.scenes.filter((s) => s.status !== "done"))
       { if (cancelRef.current) break; await generateOne(scene); }
   }
-  async function cancelGeneration() { cancelRef.current = true; setCancelRequested(true); await api.cancel(); setNotice("已停止生成，已完成的镜头会保留。"); }
+  async function cancelGeneration() { cancelRef.current = true; setCancelRequested(true); await api.cancel(); setNotice("宸插仠姝㈢敓鎴愶紝宸插畬鎴愮殑闀滃ご浼氫繚鐣欍€?); }
   async function createNewProject() {
     await api.cancel(); cancelRef.current = false; setCancelRequested(false); setChat([]); setNotice("");
     setProject({ ...defaults, id: crypto.randomUUID(), settings: project.settings });
@@ -256,7 +256,7 @@ export default function App() {
       const out = await api.compose(project);
       if (!out.canceled && out.path) {
         setProject((p) => ({ ...p, exportPath: out.path }));
-        setNotice(`导出完成：${out.path}`);
+        setNotice(`瀵煎嚭瀹屾垚锛?{out.path}`);
       }
     } catch (e: any) {
       setNotice(e.message);
@@ -272,38 +272,37 @@ export default function App() {
           <span>
             <Film size={20} />
           </span>
-          幻梦视频
+          骞绘ⅵ瑙嗛
         </div>
         <nav>
-          <button className="new-project" onClick={createNewProject}><Plus />新建创作</button>
+          <button className="new-project" onClick={createNewProject}><Plus />鏂板缓鍒涗綔</button>
           <button
             className={view === "studio" ? "active" : ""}
             onClick={() => setView("studio")}
           >
             <Clapperboard />
-            创作台
-          </button>
+            鍒涗綔鍙?          </button>
           <button
             className={view === "settings" ? "active" : ""}
             onClick={() => setView("settings")}
           >
             <SettingsIcon />
-            中转设置
+            涓浆璁剧疆
           </button>
           <button className={view === "history" ? "active" : ""} onClick={() => { setView("history"); window.vodie?.history().then(setHistory); }}>
-            <RefreshCw />生成历史
+            <RefreshCw />鐢熸垚鍘嗗彶
           </button>
         </nav>
         <div className="aside-foot">
           <div className="provider">
             <i className={project.settings.deepseek.baseUrl ? "on" : ""} />
-            <span>DeepSeek 调度</span>
-            <b>{project.settings.deepseek.baseUrl ? "已配置" : "未配置"}</b>
+            <span>DeepSeek 璋冨害</span>
+            <b>{project.settings.deepseek.baseUrl ? "宸查厤缃? : "鏈厤缃?}</b>
           </div>
           <div className="provider">
             <i className={project.settings.grok.baseUrl ? "on" : ""} />
-            <span>Grok 视频</span>
-            <b>{project.settings.grok.baseUrl ? "已配置" : "未配置"}</b>
+            <span>Grok 瑙嗛</span>
+            <b>{project.settings.grok.baseUrl ? "宸查厤缃? : "鏈厤缃?}</b>
           </div>
         </div>
       </aside>
@@ -316,7 +315,7 @@ export default function App() {
           <>
             <header>
               <div>
-                <span className="eyebrow">长视频工作区</span>
+                <span className="eyebrow">闀胯棰戝伐浣滃尯</span>
                 <input
                   className="title-input"
                   value={project.title}
@@ -327,7 +326,7 @@ export default function App() {
               </div>
               <button
                 className="icon-btn"
-                title="保存项目"
+                title="淇濆瓨椤圭洰"
                 onClick={() => api.save(project)}
               >
                 <Save />
@@ -336,19 +335,19 @@ export default function App() {
             <div className="steps">
               <Step
                 n="01"
-                label="创意简报"
+                label="鍒涙剰绠€鎶?
                 active={project.stage === 1}
                 done={project.stage > 1}
               />
               <ChevronRight />
               <Step
                 n="02"
-                label="剧本与分镜"
+                label="鍓ф湰涓庡垎闀?
                 active={project.stage === 2}
                 done={project.stage > 2}
               />
               <ChevronRight />
-              <Step n="03" label="生成与导出" active={project.stage === 3} />
+              <Step n="03" label="鐢熸垚涓庡鍑? active={project.stage === 3} />
             </div>
             {notice && (
               <div className="notice">
@@ -389,7 +388,7 @@ export default function App() {
 }
 type ChatMessage = { role: "user" | "assistant"; content: string };
 function HistoryView({ entries, onOpen }: { entries: HistoryEntry[]; onOpen: (entry: HistoryEntry) => void }) {
-  return <section className="history-view"><div className="settings-head"><span className="eyebrow">项目记录</span><h1>生成历史</h1><p>最近保存的项目和成片导出记录。</p></div>{entries.length ? <div className="history-list">{entries.map((entry) => <button className="history-row" key={entry.id} onClick={() => onOpen(entry)}><span className="history-mark"><Film /></span><span className="history-main"><b>{entry.title || '未命名影片'}</b><small>{new Date(entry.updatedAt).toLocaleString()} · {entry.sceneCount} 个镜头</small></span><span className={`status ${entry.stage >= 3 ? 'done' : ''}`}>{entry.exportPath ? '已导出' : entry.stage >= 3 ? '生成中' : '草稿'}</span><ChevronRight /></button>)}</div> : <div className="history-empty"><Film/><b>还没有生成记录</b><span>完成一次剧本或视频生成后，记录会显示在这里。</span></div>}</section>;
+  return <section className="history-view"><div className="settings-head"><span className="eyebrow">椤圭洰璁板綍</span><h1>鐢熸垚鍘嗗彶</h1><p>鏈€杩戜繚瀛樼殑椤圭洰鍜屾垚鐗囧鍑鸿褰曘€?/p></div>{entries.length ? <div className="history-list">{entries.map((entry) => <button className="history-row" key={entry.id} onClick={() => onOpen(entry)}><span className="history-mark"><Film /></span><span className="history-main"><b>{entry.title || '鏈懡鍚嶅奖鐗?}</b><small>{new Date(entry.updatedAt).toLocaleString()} 路 {entry.sceneCount} 涓暅澶?/small></span><span className={`status ${entry.stage >= 3 ? 'done' : ''}`}>{entry.exportPath ? '宸插鍑? : entry.stage >= 3 ? '鐢熸垚涓? : '鑽夌'}</span><ChevronRight /></button>)}</div> : <div className="history-empty"><Film/><b>杩樻病鏈夌敓鎴愯褰?/b><span>瀹屾垚涓€娆″墽鏈垨瑙嗛鐢熸垚鍚庯紝璁板綍浼氭樉绀哄湪杩欓噷銆?/span></div>}</section>;
 }
 function Step({
   n,
@@ -427,34 +426,34 @@ function Brief({
           <WandSparkles />
         </span>
         <div>
-          <h2>从一个想法开始</h2>
-          <p>DeepSeek 将担任编剧和总导演，建立贯穿全片的视觉连续性。</p>
+          <h2>浠庝竴涓兂娉曞紑濮?/h2>
+          <p>DeepSeek 灏嗘媴浠荤紪鍓у拰鎬诲婕旓紝寤虹珛璐┛鍏ㄧ墖鐨勮瑙夎繛缁€с€?/p>
         </div>
       </div>
-      <label>影片主题与创作要求</label>
+      <label>褰辩墖涓婚涓庡垱浣滆姹?/label>
       <textarea
         autoFocus
         value={project.brief}
         onChange={(e) => setProject({ ...project, brief: e.target.value })}
-        placeholder="例如：制作一部关于上海凌晨面包师的纪录短片。叙事温暖克制，跟随主人公从备料到第一位客人进店……"
+        placeholder="渚嬪锛氬埗浣滀竴閮ㄥ叧浜庝笂娴峰噷鏅ㄩ潰鍖呭笀鐨勭邯褰曠煭鐗囥€傚彊浜嬫俯鏆栧厠鍒讹紝璺熼殢涓讳汉鍏粠澶囨枡鍒扮涓€浣嶅浜鸿繘搴椻€︹€?
       />
       <div className="controls">
         <div>
-          <label>目标时长</label>
+          <label>鐩爣鏃堕暱</label>
           <select
             value={project.duration}
             onChange={(e) =>
               setProject({ ...project, duration: +e.target.value })
             }
           >
-            <option value="60">1 分钟</option>
-            <option value="120">2 分钟</option>
-            <option value="300">5 分钟</option>
-            <option value="600">10 分钟</option>
+            <option value="60">1 鍒嗛挓</option>
+            <option value="120">2 鍒嗛挓</option>
+            <option value="300">5 鍒嗛挓</option>
+            <option value="600">10 鍒嗛挓</option>
           </select>
         </div>
         <div>
-          <label>画面比例</label>
+          <label>鐢婚潰姣斾緥</label>
           <div className="segments">
             {["16:9", "9:16", "1:1"].map((x) => (
               <button
@@ -469,7 +468,7 @@ function Brief({
       </div>
       <button className="primary" disabled={busy} onClick={run}>
         {busy ? <LoaderCircle className="spin" /> : <Sparkles />}
-        {busy ? "正在构思全片…" : "生成剧本与分镜"}
+        {busy ? "姝ｅ湪鏋勬€濆叏鐗団€? : "鐢熸垚鍓ф湰涓庡垎闀?}
       </button>
     </section>
   );
@@ -515,19 +514,18 @@ function Storyboard({
       <div className="story-head">
         <div>
           <span className="eyebrow">
-            {project.scenes.length} 个镜头 · {total} 秒
-          </span>
-          <h2>{project.stage === 2 ? "审阅全片分镜" : "视频生成队列"}</h2>
+            {project.scenes.length} 涓暅澶?路 {total} 绉?          </span>
+          <h2>{project.stage === 2 ? "瀹￠槄鍏ㄧ墖鍒嗛暅" : "瑙嗛鐢熸垚闃熷垪"}</h2>
           <p>{project.summary}</p>
         </div>
         <div className="head-actions">
-          {project.stage === 3 && <button className="secondary stop-generation" onClick={cancelGeneration} disabled={cancelRequested || done === project.scenes.length}><CircleAlert />{cancelRequested ? "已停止" : "停止生成"}</button>}
+          {project.stage === 3 && <button className="secondary stop-generation" onClick={cancelGeneration} disabled={cancelRequested || done === project.scenes.length}><CircleAlert />{cancelRequested ? "宸插仠姝? : "鍋滄鐢熸垚"}</button>}
           <button
             className="secondary export"
             onClick={exportVideo}
             disabled={done !== project.scenes.length || busy}
           >
-            {busy ? <LoaderCircle className="spin" /> : <Download />}导出成片
+            {busy ? <LoaderCircle className="spin" /> : <Download />}瀵煎嚭鎴愮墖
           </button>
           <button
             className="primary"
@@ -536,17 +534,17 @@ function Storyboard({
           >
             <Play />
             {project.stage === 2
-              ? "确认并生成全部"
-              : `继续生成 ${project.scenes.length - done} 个镜头`}
+              ? "纭骞剁敓鎴愬叏閮?
+              : `缁х画鐢熸垚 ${project.scenes.length - done} 涓暅澶碻}
           </button>
         </div>
       </div>
       {project.stage === 3 && (
         <div className="generation-progress">
           <div>
-            <b>全片生成进度</b>
+            <b>鍏ㄧ墖鐢熸垚杩涘害</b>
             <span>
-              {done} / {project.scenes.length} 个镜头 · {percent}%
+              {done} / {project.scenes.length} 涓暅澶?路 {percent}%
             </span>
           </div>
           <div className="progress-track">
@@ -557,7 +555,7 @@ function Storyboard({
       {project.stage === 2 && (
         <>
         <ScriptChat messages={chat} busy={chatBusy} onSend={revise} onConfirm={onConfirm} />
-        <button className="confirm-script" onClick={onConfirm} disabled={chatBusy || !chat.length}><Check />确认剧本，自动开始生成视频</button>
+        <button className="confirm-script" onClick={onConfirm} disabled={chatBusy || !chat.length}><Check />纭鍓ф湰锛岃嚜鍔ㄥ紑濮嬬敓鎴愯棰?/button>
         </>
       )}
       {project.exportPath && (
@@ -566,13 +564,13 @@ function Storyboard({
           onClick={() => window.vodie?.openPath(project.exportPath!)}
         >
           <FolderOpen />
-          打开成片位置 <span>{project.exportPath}</span>
+          鎵撳紑鎴愮墖浣嶇疆 <span>{project.exportPath}</span>
         </button>
       )}
       {project.globalStyle && (
         <div className="style-line">
           <Sparkles />
-          <b>全局视觉锚点</b>
+          <b>鍏ㄥ眬瑙嗚閿氱偣</b>
           <span>{project.globalStyle}</span>
         </div>
       )}
@@ -584,15 +582,15 @@ function Storyboard({
               {s.videoUrl ? (
                 <video src={s.videoUrl} muted controls />
               ) : s.imageUrl ? (
-                <img src={s.imageUrl} alt={`${s.title} 关键帧`} />
+                <img src={s.imageUrl} alt={`${s.title} 鍏抽敭甯} />
               ) : (
                 <div className={`placeholder ${s.status}`}>
                   <Clapperboard />
                   {s.status === "generating"
-                    ? "视频与配音生成中"
+                    ? "瑙嗛涓庨厤闊崇敓鎴愪腑"
                     : s.status === "failed"
-                      ? "生成失败"
-                      : "等待生成"}
+                      ? "鐢熸垚澶辫触"
+                      : "绛夊緟鐢熸垚"}
                 </div>
               )}
             </div>
@@ -604,15 +602,15 @@ function Storyboard({
                 />
                 <span className={`status ${s.status}`}>
                   {s.status === "done"
-                    ? "音画已完成"
+                    ? "闊崇敾宸插畬鎴?
                     : s.status === "generating"
-                      ? "生成中"
+                      ? "鐢熸垚涓?
                       : s.status === "failed"
-                        ? "失败"
-                        : "草稿"}
+                        ? "澶辫触"
+                        : "鑽夌"}
                 </span>
               </div>
-              <label>旁白</label>
+              <label>鏃佺櫧</label>
               <textarea
                 value={s.narration}
                 onChange={(e) =>
@@ -623,7 +621,7 @@ function Storyboard({
                   })
                 }
               />
-              <label>Grok 视频提示词</label>
+              <label>Grok 瑙嗛鎻愮ず璇?/label>
               <textarea
                 className="prompt"
                 value={s.prompt}
@@ -639,7 +637,7 @@ function Storyboard({
               {s.error && <small className="error">{s.error}</small>}
               <div className="scene-actions">
                 <label>
-                  时长{" "}
+                  鏃堕暱{" "}
                   <input
                     type="number"
                     min="3"
@@ -652,15 +650,14 @@ function Storyboard({
                       })
                     }
                   />{" "}
-                  秒
-                </label>
+                  绉?                </label>
                 <button
                   className="secondary"
                   onClick={() => generateOne(s)}
                   disabled={s.status === "generating"}
                 >
                   <RefreshCw />
-                  {s.status === "done" ? "重新生成" : "生成镜头"}
+                  {s.status === "done" ? "閲嶆柊鐢熸垚" : "鐢熸垚闀滃ご"}
                 </button>
               </div>
             </div>
@@ -676,7 +673,7 @@ function Storyboard({
               ...project.scenes,
               {
                 id: crypto.randomUUID(),
-                title: "新镜头",
+                title: "鏂伴暅澶?,
                 duration: 8,
                 narration: "",
                 prompt: project.globalStyle,
@@ -687,7 +684,7 @@ function Storyboard({
         }
       >
         <Plus />
-        添加镜头
+        娣诲姞闀滃ご
       </button>
     </section>
   );
@@ -696,9 +693,9 @@ function ScriptChat({ messages, busy, onSend, onConfirm }: { messages: ChatMessa
   const [input, setInput] = useState("");
   const submit = () => { const value = input.trim(); if (!value || busy) return; setInput(""); onSend(value); };
   return <div className="script-chat">
-    <div className="chat-title"><MessageSquare/><div><b>与 DeepSeek 导演确认剧本</b><span>提出修改，满意后再生成视频</span></div></div>
-    <div className="chat-messages">{messages.map((message,index)=><div key={index} className={`chat-message ${message.role}`}><span>{message.role==='assistant'?'DeepSeek 导演':'你'}</span><p>{message.content}</p></div>)}{busy&&<div className="chat-message assistant"><span>DeepSeek 导演</span><p><LoaderCircle className="spin"/>正在修改剧本…</p></div>}</div>
-    <div className="chat-input"><textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submit()}}} placeholder="例如：让修仙异象更克制，结尾增加同学们的反应…"/><button onClick={submit} disabled={!input.trim()||busy} title="发送修改要求"><Send/></button></div>
+    <div className="chat-title"><MessageSquare/><div><b>涓?DeepSeek 瀵兼紨纭鍓ф湰</b><span>鎻愬嚭淇敼锛屾弧鎰忓悗鍐嶇敓鎴愯棰?/span></div></div>
+    <div className="chat-messages">{messages.map((message,index)=><div key={index} className={`chat-message ${message.role}`}><span>{message.role==='assistant'?'DeepSeek 瀵兼紨':'浣?}</span><p>{message.content}</p></div>)}{busy&&<div className="chat-message assistant"><span>DeepSeek 瀵兼紨</span><p><LoaderCircle className="spin"/>姝ｅ湪淇敼鍓ф湰鈥?/p></div>}</div>
+    <div className="chat-input"><textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submit()}}} placeholder="渚嬪锛氳淇粰寮傝薄鏇村厠鍒讹紝缁撳熬澧炲姞鍚屽浠殑鍙嶅簲鈥?/><button onClick={submit} disabled={!input.trim()||busy} title="鍙戦€佷慨鏀硅姹?><Send/></button></div>
   </div>;
 }
 function Settings({
@@ -709,16 +706,16 @@ function Settings({
   setProject: (p: Project) => void;
 }) {
   const [states, setStates] = useState<Record<string, string>>({});
-  const [media, setMedia] = useState("检测中…");
+  const [media, setMedia] = useState("妫€娴嬩腑鈥?);
   useEffect(() => {
     window.vodie
       ?.mediaCheck()
       .then((x) =>
         setMedia(
-          x.ok ? `FFmpeg 就绪 (${x.path})` : `FFmpeg 不可用：${x.error}`,
+          x.ok ? `FFmpeg 灏辩华 (${x.path})` : `FFmpeg 涓嶅彲鐢細${x.error}`,
         ),
       )
-      .catch(() => setMedia("浏览器模式未检测"));
+      .catch(() => setMedia("娴忚鍣ㄦā寮忔湭妫€娴?));
   }, []);
   const set = (provider: keyof Settings, key: string, value: string) =>
     setProject({
@@ -729,10 +726,10 @@ function Settings({
       },
     });
   const test = async (provider: "deepseek" | "grok") => {
-    setStates((s) => ({ ...s, [provider]: "测试中…" }));
+    setStates((s) => ({ ...s, [provider]: "娴嬭瘯涓€? }));
     try {
       await api.test(provider, project.settings);
-      setStates((s) => ({ ...s, [provider]: "连接成功" }));
+      setStates((s) => ({ ...s, [provider]: "杩炴帴鎴愬姛" }));
     } catch (e: any) {
       setStates((s) => ({ ...s, [provider]: e.message }));
     }
@@ -740,16 +737,15 @@ function Settings({
   return (
     <section>
       <div className="settings-head">
-        <span className="eyebrow">供应商配置</span>
-        <h1>两条通道，各司其职</h1>
+        <span className="eyebrow">渚涘簲鍟嗛厤缃?/span>
+        <h1>涓ゆ潯閫氶亾锛屽悇鍙稿叾鑱?/h1>
         <p>
-          DeepSeek 负责编剧、调度与提示词优化；Grok 专注生成视频。凭据由 Windows 加密保存。
-        </p>
+          DeepSeek 璐熻矗缂栧墽銆佽皟搴︿笌鎻愮ず璇嶄紭鍖栵紱Grok 涓撴敞鐢熸垚瑙嗛銆傚嚟鎹敱 Windows 鍔犲瘑淇濆瓨銆?        </p>
       </div>
       <div className="settings-grid">
         <ProviderCard
-          name="DeepSeek 导演调度"
-          note="剧本 · 分镜 · 提示词优化"
+          name="DeepSeek 瀵兼紨璋冨害"
+          note="鍓ф湰 路 鍒嗛暅 路 鎻愮ず璇嶄紭鍖?
           accent="green"
           data={project.settings.deepseek}
           result={states.deepseek}
@@ -757,8 +753,8 @@ function Settings({
           onChange={(k, v) => set("deepseek", k, v)}
         />
         <ProviderCard
-          name="Grok 视频中转"
-          note="镜头生成 · 异步任务轮询"
+          name="Grok 瑙嗛涓浆"
+          note="闀滃ご鐢熸垚 路 寮傛浠诲姟杞"
           accent="red"
           data={project.settings.grok}
           result={states.grok}
@@ -767,7 +763,7 @@ function Settings({
         />
       </div>
       <div className="protocol">
-        <h3>接口约定</h3>
+        <h3>鎺ュ彛绾﹀畾</h3>
         <code>DeepSeek POST /v1/chat/completions</code>
         <code>Local Windows TTS</code>
       <code>Grok POST /v1/videos/generations</code>
@@ -814,11 +810,11 @@ function ProviderCard({
       <label>API Key</label>
       <input
         type="password"
-        placeholder="sk-••••••••••••"
+        placeholder="sk-鈥⑩€⑩€⑩€⑩€⑩€⑩€⑩€⑩€⑩€⑩€⑩€?
         value={data.apiKey}
         onChange={(e) => onChange("apiKey", e.target.value)}
       />
-      <label>模型名称</label>
+      <label>妯″瀷鍚嶇О</label>
       <input
         value={data.model}
         onChange={(e) => onChange("model", e.target.value)}
@@ -827,14 +823,14 @@ function ProviderCard({
       <div className="card-foot">
         <i className={data.baseUrl && data.apiKey ? "on" : ""} />
         <span>
-          {result || (data.baseUrl && data.apiKey ? "配置完整" : "等待配置")}
+          {result || (data.baseUrl && data.apiKey ? "閰嶇疆瀹屾暣" : "绛夊緟閰嶇疆")}
         </span>
         <button
           className="secondary test-btn"
           disabled={!data.baseUrl || !data.apiKey}
           onClick={onTest}
         >
-          测试连接
+          娴嬭瘯杩炴帴
         </button>
       </div>
     </div>
